@@ -87,8 +87,8 @@ class MyGAN(object):
         self.D_patch = Discriminator_T().to(self.device)
         self.style_net = StyleEncoder().to(self.device)
         # self.style_net = GenEncoder().to(self.device)
-        self.sct = utm().to(self.device)
-        # self.sct = attention().to(self.device)
+        self.sm = SM().to(self.device)
+        # self.atten = attention().to(self.device)
         self.adain = AdaIN().to(self.device)
         self.vgg19 = VGG19().to(self.device)
         self.vgg19.eval()
@@ -97,7 +97,7 @@ class MyGAN(object):
         self.G.apply(init_weights)
         self.D.apply(init_weights)
         self.D_patch.apply(init_weights)
-        self.sct.apply(init_weights)
+        self.sm.apply(init_weights)
         self.style_net.apply(init_weights)
         self.vgg19.load_state_dict(torch.load('vgg19.pth'))
         # 定义优化器
@@ -106,7 +106,7 @@ class MyGAN(object):
         else:
             self.optim_G = optim.Adam(self.G.parameters(), lr=self.g_lr, betas=(self.b1, self.b2))
         self.op_style_net = optim.Adam(self.style_net.parameters(), lr=self.d_lr, betas=(self.b1, self.b2))
-        self.optim_sct = optim.Adam(self.sct.parameters(), lr=self.d_lr, betas=(self.b1, self.b2))
+        self.optim_sct = optim.Adam(self.sm.parameters(), lr=self.d_lr, betas=(self.b1, self.b2))
         self.optim_D = optim.Adam(self.D.parameters(), lr=self.d_lr, betas=(self.b1, self.b2))
         self.optim_D_Patch = optim.Adam(self.D_patch.parameters(), lr=self.g_lr, betas=(self.b1, self.b2))
         # 定义损失
@@ -225,7 +225,7 @@ class MyGAN(object):
                     self.optim_G.zero_grad()
                     self.optim_sct.zero_grad()
                     con_code = self.G.encoder(x)
-                    con_code = self.sct(con_code, init=True)
+                    con_code = self.sm(con_code, init=True)
                     fake1_img = self.G.decoders(con_code)
                     real_con = self.vgg19(x)
                     fake_con1 = self.vgg19(fake1_img)
@@ -275,7 +275,7 @@ class MyGAN(object):
                     rand_style = torch.randn([self.batch_size, 256, 64, 64]).to(self.device).requires_grad_()
                     style_code = self.style_net(y)
                     content_code = self.G.encoder(x)
-                    share_code = self.sct(content_code, style_code, rand_style)
+                    share_code = self.sm(content_code, style_code, rand_style)
                     fake_img = self.G.decoders(share_code)
                     # 减少模型震荡
                     # surface
@@ -298,7 +298,7 @@ class MyGAN(object):
                     self.optim_D_Patch.step()
                     # G
                     self.style_net.train()
-                    self.sct.train()
+                    self.sm.train()
                     self.optim_G.zero_grad()
                     self.op_style_net.zero_grad()
                     self.optim_sct.zero_grad()
@@ -306,7 +306,7 @@ class MyGAN(object):
                     rand_style = torch.randn([self.batch_size, 256, 64, 64]).to(self.device).requires_grad_()
                     style_code = self.style_net(y)
                     content_code = self.G.encoder(x)
-                    share_code = self.sct(content_code, style_code, rand_style)
+                    share_code = self.sm(content_code, style_code, rand_style)
                     fake1_img = self.G.decoders(share_code)
                     # style_code1=self.style_net(fake1_img)
                     # style_loss=self.l1_loss(style_code1,style_code)*self.weight_style
@@ -390,11 +390,11 @@ class MyGAN(object):
             save_image(image, os.path.join(self.result_dir, self.dataset, 'img', f"train_{j}{epoch}.png"))
         print("训练集测试图像生成成功！")
         self.save_model()
-        self.G.train(), self.style_net.train(), self.sct.train()
+        self.G.train(), self.style_net.train(), self.sm.train()
 
     def save_img(self, epoch):
         test_sample_num = 1
-        self.G.eval(), self.style_net.eval(), self.sct.eval()
+        self.G.eval(), self.style_net.eval(), self.sm.eval()
         data_loader = self.load_data()
         for j in range(test_sample_num):
             for i, (x, y) in tqdm(enumerate(data_loader)):
@@ -405,7 +405,7 @@ class MyGAN(object):
                 self.device).requires_grad_()
             style_code = self.style_net(y)
             content_code = self.G.encoder(x)
-            share_code = self.sct(content_code, style_code, rand_style)
+            share_code = self.sm(content_code, style_code, rand_style)
             fake_img1 = self.G.decoders(share_code)  # 生成假图
             fake_img2 = self.gf.guided_filter(x, fake_img1, r=1)
             image = torch.cat((x * 0.5 + 0.5, fake_img1 * 0.5 + 0.5, fake_img2 * 0.5 + 0.5), axis=3)
@@ -420,20 +420,20 @@ class MyGAN(object):
         rand_style = torch.randn([4, self.hw, self.latent_dim, self.latent_dim]).to(self.device).requires_grad_()
         style_code = self.style_net(y)
         content_code = self.G.encoder(x)
-        share_code = self.sct(content_code, style_code, rand_style)
+        share_code = self.sm(content_code, style_code, rand_style)
         fake_img = self.G.decoders(share_code)
         lr_img2 = self.gf.guided_filter(x, fake_img, r=1)
         image = torch.cat((x * 0.5 + 0.5, fake_img * 0.5 + 0.5, lr_img2 * 0.5 + 0.5), axis=3)
         save_image(image, os.path.join(self.result_dir, self.dataset, 'img', f"test_{epoch}.png"))
         print("高分辨率测试集测试图像生成成功！")
         self.save_model()
-        self.G.train(), self.style_net.train(), self.sct.train()
+        self.G.train(), self.style_net.train(), self.sm.train()
 
     # 保存模型
     def save_model(self):
         params = {}
         params["G"] = self.G.state_dict()
-        params['sct'] = self.sct.state_dict()
+        params['sct'] = self.sm.state_dict()
         params["style"] = self.style_net.state_dict()
         params["D"] = self.D.state_dict()
         params["D_patch"] = self.D_patch.state_dict()
@@ -445,7 +445,7 @@ class MyGAN(object):
     def load_model(self):
         params = torch.load(self.test_dir)
         self.G.load_state_dict(params['G'])
-        self.sct.load_state_dict(params['sct'])
+        self.sm.load_state_dict(params['sm'])
         self.style_net.load_state_dict(params['style'])
         # self.D.load_state_dict(params['D'])
         # self.D_patch.load_state_dict(params['D_patch'])
@@ -454,7 +454,7 @@ class MyGAN(object):
     def test(self):
         self.load_model()
         test_sample_num = 1
-        self.G.eval(), self.style_net.eval(),self.sct.eval()
+        self.G.eval(), self.style_net.eval(),self.sm.eval()
         data_loader = self.load_data()
         for j in range(test_sample_num):
             for i, (x, y) in tqdm(enumerate(data_loader)):
@@ -463,7 +463,7 @@ class MyGAN(object):
                 style_code = self.style_net(y)
                 content_code = self.G.encoder(x)
                 # share_code = content_code + style_code
-                share_code = self.sct(content_code, style_code)
+                share_code = self.sm(content_code, style_code)
                 fake_img = self.G.decoders(share_code)  # 生成假图
                 fake_img = fake_img[0] * 0.5 + 0.5
                 save_image(fake_img,
@@ -475,7 +475,7 @@ class MyGAN(object):
     def high_test(self):
         self.load_model()
         data_loader = self.load_data(epoch_test=True, high=True)
-        self.G.eval(), self.style_net.eval(), self.sct.eval()
+        self.G.eval(), self.style_net.eval(), self.sm.eval()
         # val_files = glob('./data/{}/*.*'.format('testHR'))
         #
         # for j, sample_file in enumerate(val_files):
@@ -488,7 +488,7 @@ class MyGAN(object):
                 style_code = self.style_net(y)
                 content_code = self.G.encoder(x)
                 # share_code= content_code + style_code  # w/o SM module
-                share_code= self.sct(content_code, style_code)
+                share_code= self.sm(content_code, style_code)
                 # share_code = self.adain(content_code, style_code)
                 fake_img = self.G.decoders(share_code)
             print(prof)
