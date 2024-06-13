@@ -140,9 +140,9 @@ def mean_variance_norm(feat):
 #                 gF = gF + smean.expand(cF_nor.size())+content+noise
 #             return gF
 # 改进残差的SM
-class utm(nn.Module):
+class SM(nn.Module):
     def __init__(self):
-        super(utm, self).__init__()
+        super(SM, self).__init__()
 
         self.net = nn.Sequential(nn.Conv2d(256,128,1,1,0),
                 nn.ReLU(inplace=True),
@@ -167,7 +167,7 @@ class utm(nn.Module):
             # gF =self.adain(cF, sF)
             s_cov = calc_cov(sF)
             b1, c1, hw = s_cov.size()
-            s_cov += self.sm(s_cov) * int(c1) ** (-0.5)  # test
+            s_cov = self.sm(s_cov) * int(c1) ** (-0.5)  # test
             gF = torch.bmm(s_cov,cF.flatten(2, 3)).view(b,c,w,h)
             gF = self.uncompress(gF)
             if noise==None:
