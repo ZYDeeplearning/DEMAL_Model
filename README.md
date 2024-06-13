@@ -7,6 +7,8 @@ usually use a ``single-encoding adversarial feedback architecture'' to generate 
 ## Framework
 ![DEMAL](https://github.com/ZYDeeplearning/DEMAL_Model/blob/main/1.png)
 The overall pipeline of our DEMAL framework.
+## Results
+![DEMAL](https://github.com/ZYDeeplearning/DEMAL_Model/blob/main/2.png)
 
 ## Environment
 You can visit [Kaggle ((https://www.kaggle.com))] 
