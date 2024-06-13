@@ -9,4 +9,10 @@ usually use a ``single-encoding adversarial feedback architecture'' to generate 
 You can visit [Kaggle ((https://www.kaggle.com))] 
 
 ## Pretrained models
+You can visit[Google(https://drive.google.com/drive/folders/1Bk0H3VrkdkeLuxW7Rieki-BvhqKPxNdC?usp=drive_link)], includings the training weights on the ``Hayao'',``Shinkai'', and ``Paprika'' datasets.
 
+## Run
+Inculding 20 epoch Pretraining, you can set the ``--init_train''==True. 
+```
+python main.py 
+```
