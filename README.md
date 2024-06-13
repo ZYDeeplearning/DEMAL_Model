@@ -9,6 +9,8 @@ usually use a ``single-encoding adversarial feedback architecture'' to generate 
 The overall pipeline of our DEMAL framework.
 ## Results
 ![DEMAL](https://github.com/ZYDeeplearning/DEMAL_Model/blob/main/2.png)
+![DEMAL](https://github.com/ZYDeeplearning/DEMAL_Model/blob/main/3.png)
+![DEMAL](https://github.com/ZYDeeplearning/DEMAL_Model/blob/main/4.png)
 
 ## Environment
 You can visit [Kaggle ((https://www.kaggle.com))] 
