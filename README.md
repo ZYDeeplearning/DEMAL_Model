@@ -17,8 +17,9 @@ You can visit [Kaggle ((https://www.kaggle.com))]
 You can visit[Google(https://drive.google.com/drive/folders/1Bk0H3VrkdkeLuxW7Rieki-BvhqKPxNdC?usp=drive_link)], includings the training weights on the 'Hayao', 'Shinkai'', and 'Paprika'' datasets.
 
 ## Run
+##Training
 Inculding 20 epoch Pretraining, you can set the ``--train_init ==True``. To format training, you need run 150epoch by setting the  ``--isTrain ==True``, but 
 ``--train_init==False``. (Note that you need load your pretraing weight or use ours [Google(https://drive.google.com/drive/folders/1Bk0H3VrkdkeLuxW7Rieki-BvhqKPxNdC?usp=drive_link)])
 ```
-python main.py 
+python main.py --xxxx.
 ```
