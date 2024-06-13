@@ -8,8 +8,8 @@ def parse_args():
     parser=argparse.ArgumentParser(desc)
     parser.add_argument('--device',type=str,default='cuda',choices=['cuda','cpu'])
     parser.add_argument('--input_c', type=int, default=3)
-    parser.add_argument('--epoch', type=int, default=1)
-    parser.add_argument('--pre_epoch', type=int, default=10)
+    parser.add_argument('--epoch', type=int, default=150)
+    parser.add_argument('--pre_epoch', type=int, default=20)
     parser.add_argument('--cpu_count', type=int, default=10)
     parser.add_argument('--init_lr',type=float,default=0.002)
     parser.add_argument('--g_lr', type=float, default=0.0002, help='learning rate for ADAM')
@@ -33,11 +33,11 @@ def parse_args():
     parser.add_argument('--latent_dim', type=int, default=64)
     parser.add_argument('--patch_size', type=int, default=96)
     parser.add_argument('--s', type=int, default=48)
-    parser.add_argument('--batch_size',type=int,default=4)
+    parser.add_argument('--batch_size',type=int,default=6)
     parser.add_argument('--save_pred',type=int,default=1)
     parser.add_argument('--weight_content',type=float,default=2)#big
     parser.add_argument('--weigh'
-                        't_struct',type=float,default=2)#有问题
+                        't_struct',type=float,default=2)
     parser.add_argument('--weight_surface', type=float, default=5)
     parser.add_argument('--weight_testure', type=float, default=5)
     parser.add_argument('--weight_classifer', type=float, default=0)
