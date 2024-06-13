@@ -1,5 +1,5 @@
 # DEMAL_Model
-Dual-Encoding Matching Adversarial Learning for Image Cartoonlization
+Dual-Encoding Matching Adversarial Learning for Image Cartoonlization (TCSVT Accepted!)
 
 ## Abstract
 Generative Adversarial Network (GAN)-based image cartoonization has made great progress. They 
