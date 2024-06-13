@@ -194,7 +194,7 @@ class MyGAN(object):
         out_con = self.l1_loss(fake, real)
         return out_con
 
-    # dis loss
+      # dis loss
     def discriminator_loss(self, real, fake):
         real_loss = torch.mean(torch.square(real - 1.0))
         fake_loss = torch.mean(torch.square(fake))
@@ -202,6 +202,19 @@ class MyGAN(object):
         return loss
 
     def generator_loss(self, fake):
+        fake_loss = torch.mean(torch.square(fake - 1.0))
+        return fake_loss
+    # dis loss
+    def discriminator_gram_loss(self, real,fake):
+        real = gram(real)
+        fake = gram(fake)
+        real_loss = torch.mean(torch.square(real - 1.0))
+        fake_loss = torch.mean(torch.square(fake))
+        loss = real_loss + fake_loss
+        return loss
+
+    def generator_gram_loss(self, fake):
+        fake = gram(fake)
         fake_loss = torch.mean(torch.square(fake - 1.0))
         return fake_loss
 
@@ -272,26 +285,27 @@ class MyGAN(object):
                     self.op_style_net.zero_grad()
                     self.optim_sct.zero_grad()
                     # D
-                    rand_style = torch.randn([self.batch_size, 256, 64, 64]).to(self.device).requires_grad_()
-                    style_code = self.style_net(y)
-                    content_code = self.G.encoder(x)
-                    share_code = self.sm(content_code, style_code, rand_style)
-                    fake_img = self.G.decoders(share_code)
-                    # 减少模型震荡
+                    style_code=self.style_net(y)
+                    content_code= self.G.encoder(x)
+                    share_code=self.sct(content_code,style_code)
+                    fake_img=self.G.decoders(share_code)
+              # 减少模型震荡
                     # surface
-                    gf_real_img = self.gf.guided_filter(y, y, r=5, eps=2e-1)
-                    gf_fake_img = self.gf.guided_filter(fake_img, fake_img, r=5, eps=2e-1)
-                    d_real_feature = self.style_net(gf_real_img)
-                    d_fake_feature = self.style_net(gf_fake_img)
-                    d_real_logit = self.D(gf_real_img, d_real_feature)
-                    d_fake_logit = self.D(gf_fake_img, d_fake_feature)
-                    d_surface_loss = self.discriminator_loss(d_real_logit, d_fake_logit)
+                    gf_real_img_h =interpolate(y,scale_factor=2,mode='bilinear')
+                    gf_fake_img_h =interpolate(fake_img,scale_factor=2,mode='bilinear')
+                    gf_real_img_h = self.gf.guided_filter(gf_real_img_h, gf_real_img_h, r=5, eps=2e-1)
+                    gf_fake_img_h = self.gf.guided_filter(gf_fake_img_h, gf_fake_img_h, r=5, eps=2e-1)
+                    
+                    d_real_logit=self.D(gf_real_img_h)
+                    d_fake_logit=self.D(gf_fake_img_h.detach())
+                    d_surface_loss= self.discriminator_loss(d_real_logit, d_fake_logit)
                     # testure
-                    anime_gry_patch, fake_gry_patch = self.load_patch(y, fake_img)
-                    #
-                    real_patch_logit = self.D_patch(anime_gry_patch)
-                    fake_patch_logit = self.D_patch(fake_gry_patch)
-                    d_testure_loss = self.discriminator_loss(real_patch_logit, fake_patch_logit)
+                    anime_gry_patch, fake_gry_patch= self.load_patch(gf_real_img_h, gf_fake_img_h)
+#                     anime_gry_patch = interpolate(anime_gry_patch,scale_factor=2,mode='bilinear')
+#                     fake_gry_patch = interpolate(fake_gry_patch,scale_factor=2,mode='bilinear')
+                    real_patch_logit=self.D_patch(anime_gry_patch)
+                    fake_patch_logit= self.D_patch(fake_gry_patch.detach())
+                    d_testure_loss = self.discriminator_gram_loss(real_patch_logit,fake_patch_logit)
                     d_loss = (d_surface_loss + d_testure_loss) / 2
                     d_loss.backward()
                     self.optim_D.step()
@@ -303,26 +317,23 @@ class MyGAN(object):
                     self.op_style_net.zero_grad()
                     self.optim_sct.zero_grad()
                     # style  loss
-                    rand_style = torch.randn([self.batch_size, 256, 64, 64]).to(self.device).requires_grad_()
-                    style_code = self.style_net(y)
-                    content_code = self.G.encoder(x)
-                    share_code = self.sm(content_code, style_code, rand_style)
-                    fake1_img = self.G.decoders(share_code)
-                    # style_code1=self.style_net(fake1_img)
-                    # style_loss=self.l1_loss(style_code1,style_code)*self.weight_style
-                    #  #content_re
-                    # content_code1=self.G.encoder(fake1_img)
-                    # content_loss=self.l1_loss(content_code1,content_code)*self.weight_struct
+                    style_code=self.style_net(y)
+                    content_code= self.G.encoder(x)
+                    share_code=self.sct(content_code,style_code)
+                    fake1_img=self.G.decoders(share_code)
                     # surface
-                    gf_fake_img1 = self.gf.guided_filter(fake1_img, fake1_img, r=5, eps=2e-1)
-                    gf_fake_feature = self.style_net(gf_fake_img1)
-                    g_fake_logit1 = self.D(gf_fake_img1, gf_fake_feature)
-                    g_surface_loss = self.generator_loss(g_fake_logit1) * self.weight_surface
+                    gf_fake_img_h1 =interpolate(fake1_img,scale_factor=2,mode='bilinear')
+#                     y =interpolate(y,scale_factor=2,mode='bilinear')
+                    gf_fake_img_h1 = self.gf.guided_filter(gf_fake_img_h1, gf_fake_img_h1, r=5, eps=2e-1)
+                    
+                    g_fake_logit1 = self.D(gf_fake_img_h1)
+                    g_surface_loss =self.generator_loss(g_fake_logit1)*self.weight_surface
                     # testure
-                    _, fake_gry_patch1 = self.load_patch(y, fake1_img)
-                    fake_patch_logit = self.D_patch(fake_gry_patch1)
-
-                    g_testure_loss = self.generator_loss(fake_patch_logit) * self.weight_testure
+                    _, fake_gry_patch1 = self.load_patch(gf_fake_img_h1, gf_fake_img_h1)
+#                     fake_gry_patch1 = interpolate(fake_gry_patch1,scale_factor=2,mode='bilinear')
+                    fake_patch_logit=self.D_patch(fake_gry_patch1)
+            
+                    g_testure_loss = self.generator_gram_loss(fake_patch_logit)*self.weight_testure
                     # 分层 content loss
                     real_con = self.vgg19(x)
                     fake_con1 = self.vgg19(fake1_img)
@@ -433,7 +444,7 @@ class MyGAN(object):
     def save_model(self):
         params = {}
         params["G"] = self.G.state_dict()
-        params['sct'] = self.sm.state_dict()
+        params['sm'] = self.sm.state_dict()
         params["style"] = self.style_net.state_dict()
         params["D"] = self.D.state_dict()
         params["D_patch"] = self.D_patch.state_dict()
