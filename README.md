@@ -14,7 +14,8 @@ The overall pipeline of our DEMAL framework.
 
 ## Environment
 You can visit [Kaggle ((https://www.kaggle.com))] 
-
+## Datasets
+We use the paper's datasets (https://github.com/TachibanaYoshino/AnimeGAN). 
 ## Pretrained models
 You can visit[Google(https://drive.google.com/drive/folders/1Bk0H3VrkdkeLuxW7Rieki-BvhqKPxNdC?usp=drive_link)], includings the training weights on the 'Hayao', 'Shinkai'', and 'Paprika'' datasets.
 
